@@ -1,6 +1,9 @@
 module Spree
   Taxon.class_eval do
-    translates :name, :description, :permalink
+    translates :name, :description, :permalink    
+    
+    # No blank translation !
+    before_save :create_default_transalations
 
     # Public : Permalink setter with multi language support
     #
@@ -34,6 +37,18 @@ module Spree
         end
         write_attribute :permalink, [parent_taxon.permalink, (self.permalink.blank? ? name.to_url : self.permalink.split('/').last)].join('/')
       end
+    end
+
+
+    private
+
+    def create_default_transalations 
+      I18n.available_locales.each do |locale|
+        name_locale = self.send("name_#{locale.to_s}")
+        permalink_locale = self.send("permalink_#{locale.to_s}") 
+        self.update_attribute("name_#{locale.to_s}", name) if name_locale.blank?
+        self.update_attribute("permalink_#{locale.to_s}", permalink) if permalink_locale.blank?
+      end 
     end
   end
 end
